@@ -21,41 +21,48 @@ document.addEventListener('DOMContentLoaded', () => {
         button.addEventListener('click', () => {
             const keyValue = button.dataset.key;
 
-            if (keyValue === 'confirm') {
+                       if (keyValue === 'confirm') {
                 if (currentTargetZone && currentInput.length > 0) {
                     const displayElement = currentTargetZone.querySelector('.numbers-display');
                     let existingNumbersText = displayElement.textContent;
                     
-                    // تحويل الأرقام الموجودة إلى Set من الأرقام (وليس السلاسل النصية)
                     let existingNumbersSet = new Set();
                     if (existingNumbersText && existingNumbersText.trim() !== "" && existingNumbersText.trim() !== '-') {
                         existingNumbersText.split('-').forEach(numStr => {
-                            if (numStr.trim() !== "") { // تأكد أن السلسلة ليست فارغة
-                                existingNumbersSet.add(parseInt(numStr.trim())); // تحويل إلى رقم وإضافة
+                            // التحقق الإضافي هنا مهم
+                            if (numStr.trim() !== "" && !isNaN(parseInt(numStr.trim()))) {
+                                existingNumbersSet.add(parseInt(numStr.trim()));
                             }
                         });
                     }
 
-                    // إضافة الأرقام الجديدة من currentInput إلى Set، مع التحقق من عدم التكرار والحد الأقصى
                     for (let char of currentInput) {
                         const newNum = parseInt(char);
-                        if (!existingNumbersSet.has(newNum)) { // إذا لم يكن الرقم موجودًا
-                            if (existingNumbersSet.size < 7) { // إذا لم نصل للحد الأقصى (7 أرقام)
+                        // التحقق الإضافي هنا مهم
+                        if (!isNaN(newNum) && !existingNumbersSet.has(newNum)) {
+                            if (existingNumbersSet.size < 7) {
                                 existingNumbersSet.add(newNum);
                             } else {
-                                alert("لا يمكن إضافة أكثر من 7 أرقام فريدة لكل منطقة.");
-                                break; // توقف عن إضافة المزيد من الأرقام من currentInput
+                                // يمكنك إزالة هذا الـ alert إذا كان مزعجًا، أو تعديله
+                                // alert("لا يمكن إضافة أكثر من 7 أرقام فريدة لكل منطقة."); 
+                                console.log("Limit of 7 unique numbers reached.");
+                                break; 
                             }
                         }
                     }
                     
-                    // تحويل Set مرة أخرى إلى سلسلة نصية للعرض، مع الفرز
                     let sortedNumbersArray = Array.from(existingNumbersSet).sort((a, b) => a - b);
                     displayElement.textContent = sortedNumbersArray.join('-');
                     
+                    // إذا كانت المجموعة فارغة بعد كل العمليات، ربما نجعل النص فارغًا أو "-"
+                    if (sortedNumbersArray.length === 0) {
+                        // displayElement.textContent = '-'; // أو ''
+                    }
+
                     saveData();
                 }
                 closeKeypad();
+            
             } else if (keyValue === 'backspace') {
                 currentInput = currentInput.slice(0, -1);
                 console.log("Current keypad input (after backspace):", currentInput);
