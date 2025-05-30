@@ -1,122 +1,161 @@
-body {
-    font-family: sans-serif;
-    background-color: #111; /* أسود داكن بدلاً من أبيض */
-    color: #eee; /* لون نص فاتح افتراضي */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center; /* لتوسيط المحتوى */
-    min-height: 100vh; /* لجعل الخلفية تملأ الشاشة */
-    margin: 0;
-    padding: 10px;
+:root {
+    --background-color: #000000;
+    --zone-background: #0a0a0a; /* أغمق قليلاً من الأسود أو نفس الأسود */
+    --zone-border: #1a1a1a; /* إطار خافت جداً إذا لزم الأمر */
+    --text-color: #e0e0e0;
+    --accent-color: #ff6b6b; /* لون للأرقام أو للأزرار المميزة */
+    --keypad-bg: #181818;
+    --keypad-button-bg: #282828;
+    --keypad-button-hover-bg: #383838;
+}
+
+* {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
-.game-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 90%;
-    max-width: 400px; /* عرض مناسب للمحتوى */
-    border: none; /* لا حاجة لإطار خارجي */
-}
-
-.player-area {
-    background-color: #222; /* خلفية داكنة قليلاً للأشكال */
-    border: 1px solid #444; /* إطار خفيف للأشكال */
-    border-radius: 10px; /* زوايا دائرية */
-    padding: 20px;
-    margin: 10px;
-    text-align: center;
-    min-height: 80px; /* ارتفاع أدنى للشكل */
-    width: 100%; /* اجعل المناطق تمتد */
-    cursor: pointer; /* إشارة إلى أنها قابلة للضغط */
-    display: flex;
-    flex-direction: column;
-    justify-content: center; /* توسيط الأرقام عمودياً */
-    align-items: center; /* توسيط الأرقام أفقياً */
-    transition: background-color 0.3s; /* تأثير بسيط عند المرور */
-}
-
-.player-area:hover {
-    background-color: #333; /* تغيير لون الخلفية عند مرور الماوس */
-}
-
-/* إخفاء العناوين النصية والأزرار القديمة */
-.player-area h3,
-.player-area .input-btn {
-    display: none;
-}
-
-#friend-area {
-    /* (الأعلى) لا حاجة لتعديل خاص بالموقع هنا، سيعتمد على ترتيب HTML */
-}
-.middle-row {
-    display: flex;
-    justify-content: space-between;
+html, body {
     width: 100%;
-    /* يمكن إزالة هذا إذا كانت المناطق تحت بعضها البعض */
-}
-/* إذا أردت يسار ويمين بجانب بعضهما البعض */
-#left-area, #right-area {
-   /* width: 45%;  يمكنك ضبط هذا إذا كانوا في نفس الصف */
-}
-
-
-.missing-numbers {
-    font-size: 1.8em; /* حجم أكبر للأرقام */
-    color: #e06c75; /* لون أحمر فاتح للأرقام (يتناسب مع الأسود) */
-    font-weight: bold;
+    height: 100%;
+    overflow: hidden; /* لمنع أي تمرير غير مرغوب فيه */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* خط بسيط */
+    background-color: var(--background-color);
+    color: var(--text-color);
+    -webkit-tap-highlight-color: transparent; /* لإزالة التظليل عند النقر على الهاتف */
 }
 
-.controls {
-    margin-top: 20px;
-    text-align: center;
+.game-board {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 10px; /* هامش صغير حول اللوحة */
 }
 
-.controls button {
-    background-color: #007bff; /* أو أي لون تفضله للأزرار */
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 10px 20px;
-    margin: 5px;
-    font-size: 1em;
+.player-zone {
+    background-color: var(--zone-background);
+    /* border: 1px solid var(--zone-border); */ /* يمكنك تفعيله إذا أردت إطارًا */
+    border-radius: 8px; /* زوايا دائرية خفيفة */
+    display: flex;
+    justify-content: center;
+    align-items: center;
     cursor: pointer;
-    /* يمكن استبدال النص بأيقونات هنا */
-}
-.controls button:hover {
-    background-color: #0056b3;
+    transition: background-color 0.2s ease-in-out;
+    overflow: hidden; /* لضمان عدم تجاوز الأرقام الكبيرة */
+    position: relative; /* لوضع الأرقام بشكل جيد */
 }
 
-/* تعديل شكل النافذة المنبثقة (Modal) */
-.modal {
-    background-color: rgba(0,0,0,0.7); /* خلفية معتمة أكثر */
+.player-zone:active { /* عند الضغط المستمر */
+    background-color: #151515; /* تغميق طفيف */
 }
-.modal-content {
-    background-color: #2a2a2a; /* خلفية داكنة للنافذة */
-    color: #eee; /* نص فاتح */
-    border: 1px solid #555;
+
+.zone-top {
+    flex: 1; /* يأخذ المساحة المتاحة في الأعلى */
+    margin-bottom: 10px;
+}
+
+.middle-zones {
+    flex: 1.5; /* يأخذ مساحة أكبر قليلاً من العلوي */
+    display: flex;
+    gap: 10px; /* مسافة بين المنطقتين اليسرى واليمنى */
+}
+
+.zone-left, .zone-right {
+    flex: 1; /* كل منهما يأخذ نصف المساحة المتاحة في الصف الأوسط */
+}
+
+.numbers-display {
+    font-size: clamp(2rem, 8vw, 4rem); /* حجم خط مرن يتكيف مع عرض الشاشة */
+    font-weight: bold;
+    color: var(--accent-color);
+    padding: 10px;
+    text-align: center;
+    word-break: break-all; /* لكسر الأرقام الطويلة */
+    line-height: 1.2;
+}
+
+.reset-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px; /* أو left: 20px إذا كان dir="ltr" */
+    background-color: var(--keypad-button-bg);
+    color: var(--text-color);
+    border: none;
+    border-radius: 50%; /* دائري */
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    z-index: 100;
+}
+.reset-button svg {
+    fill: var(--text-color);
+}
+.reset-button:hover {
+    background-color: var(--keypad-button-hover-bg);
+}
+
+.keypad-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8); /* تعتيم الخلفية */
+    display: none; /* مخفي افتراضيًا */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.keypad {
+    background-color: var(--keypad-bg);
+    padding: 15px;
+    border-radius: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 أعمدة */
+    gap: 10px;
+    width: 100%;
+    max-width: 280px; /* عرض أقصى للوحة الأرقام */
+}
+
+.keypad button {
+    background-color: var(--keypad-button-bg);
+    color: var(--text-color);
+    border: none;
     border-radius: 8px;
+    font-size: 1.8rem;
+    padding: 15px 0; /* ارتفاع جيد للأزرار */
+    cursor: pointer;
+    transition: background-color 0.2s;
+    -webkit-user-select: none; /* لمنع تحديد النص عند الضغط المتكرر */
+    user-select: none;
 }
-.modal-content h4 {
-    color: #bbb; /* لون أفتح قليلاً للعنوان */
+
+.keypad button:hover {
+    background-color: var(--keypad-button-hover-bg);
 }
-#number-input {
-    background-color: #333;
-    color: #eee;
-    border: 1px solid #555;
+.keypad button:active {
+    background-color: #404040;
 }
-#submit-numbers {
-    /* نفس تنسيق أزرار التحكم */
-    background-color: #28a745; /* أخضر للتأكيد */
+
+.keypad .keypad-confirm {
+    background-color: #4CAF50; /* أخضر للتأكيد */
 }
-#submit-numbers:hover {
-    background-color: #1e7e34;
+.keypad .keypad-confirm:hover {
+    background-color: #45a049;
 }
-.close-btn {
-    color: #aaa;
+.keypad .keypad-backspace {
+    background-color: #f44336; /* أحمر للمسح */
 }
-.close-btn:hover {
-    color: #fff;
+.keypad .keypad-backspace:hover {
+    background-color: #da190b;
 }
+
+/* تعديل ليكون آخر زرين (تأكيد ومسح) يأخذان مساحة أوسع قليلاً إذا لزم الأمر */
+/* .keypad button[data-key="confirm"] { grid-column: span 2; } */
