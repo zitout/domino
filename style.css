@@ -34,16 +34,16 @@ html, body {
 }
 
 .player-zone {
-    background-color: var(--zone-background);
-    /* border: 1px solid var(--zone-border); */ /* يمكنك تفعيله إذا أردت إطارًا */
-    border-radius: 8px; /* زوايا دائرية خفيفة */
+    background-color: var(--zone-background); /* #0a0a0a أو حتى #000000 إذا أردت المناطق بنفس لون الخلفية */
+      border: 1px solid #ffffff; */
+    border-radius: 8px;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
     transition: background-color 0.2s ease-in-out;
-    overflow: hidden; /* لضمان عدم تجاوز الأرقام الكبيرة */
-    position: relative; /* لوضع الأرقام بشكل جيد */
+    overflow: hidden;
+    position: relative;
 }
 
 .player-zone:active { /* عند الضغط المستمر */
