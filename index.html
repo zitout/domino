@@ -2,53 +2,43 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مساعد الدومينو</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>مساعد الدومينو الذكي</title>
     <link rel="stylesheet" href="style.css">
+    <!-- قد نضيف لاحقًا أيقونات FontAwesome أو ما شابه -->
 </head>
 <body>
-    <div class="game-container">
-        <!-- منطقة الصديق (الأمام) -->
-        <div class="player-area" id="friend-area" data-player="friend" title="أرقام الصديق">
-            <!-- <h3>مقابلي (صديقك)</h3> -->
-            <div class="missing-numbers" id="friend-missing">-</div>
-            <!-- <button class="input-btn" data-player="friend">إدخال لصديقك</button> -->
+    <div class="game-board">
+        <div class="player-zone zone-top" id="friend-zone" data-player="friend">
+            <span class="numbers-display" id="friend-numbers"></span>
         </div>
-
-        <!-- يمكن وضع اللاعبين (يسار ويمين) في صف واحد أو تحت بعضهما -->
-        <div class="middle-row"> <!-- هذا الـ div اختياري، إذا أردتهم جنبًا إلى جنب -->
-            <!-- منطقة لاعب اليسار -->
-            <div class="player-area" id="left-area" data-player="left" title="أرقام لاعب اليسار">
-                <!-- <h3>يسار</h3> -->
-                <div class="missing-numbers" id="left-missing">-</div>
-                <!-- <button class="input-btn" data-player="left">إدخال ليسار</button> -->
+        <div class="middle-zones">
+            <div class="player-zone zone-left" id="left-zone" data-player="left">
+                <span class="numbers-display" id="left-numbers"></span>
             </div>
-
-            <!-- منطقة لاعب اليمين -->
-            <div class="player-area" id="right-area" data-player="right" title="أرقام لاعب اليمين">
-                <!-- <h3>يمين</h3> -->
-                <div class="missing-numbers" id="right-missing">-</div>
-                <!-- <button class="input-btn" data-player="right">إدخال ليمين</button> -->
+            <div class="player-zone zone-right" id="right-zone" data-player="right">
+                <span class="numbers-display" id="right-numbers"></span>
             </div>
         </div>
-
-        <!-- منطقة اللاعب (أنت) - ليست تفاعلية لإدخال الأرقام -->
-        <!-- <div class="player-area" id="user-area" style="cursor: default; background-color: #1c1c1c;">
-            <p style="font-size:0.9em; color: #777;">(أنت)</p>
-        </div> -->
     </div>
 
-    <div class="controls">
-        <button id="start-game">🔄 ابدأ</button> <!-- مثال على استخدام أيقونة ونص -->
-        <button id="end-game">⏹️ إنهاء</button>
-    </div>
+    <button class="reset-button" id="reset-all" title="مسح الكل">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.17l2.12-2.12 1.41 1.41L13.41 13.5l2.12 2.12-1.41 1.41L12 14.83l-2.12 2.12-1.41-1.41L10.59 13.5l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+        <!-- أو كلمة "امسح" -->
+    </button>
 
-    <div id="keypad-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn">×</span>
-            <h4>أدخل الأرقام (0-6):</h4>
-            <input type="text" id="number-input" pattern="[0-6]*" maxlength="7">
-            <button id="submit-numbers">✔️ تأكيد</button>
+    <div class="keypad-overlay" id="keypad-overlay">
+        <div class="keypad">
+            <button data-key="1">1</button>
+            <button data-key="2">2</button>
+            <button data-key="3">3</button>
+            <button data-key="4">4</button>
+            <button data-key="5">5</button>
+            <button data-key="6">6</button>
+            <button data-key="0">0</button>
+            <button data-key="confirm" class="keypad-confirm">✔️</button>
+            <button data-key="backspace" class="keypad-backspace">⌫</button>
+            <!-- <button data-key="cancel" class="keypad-cancel">❌</button> -->
         </div>
     </div>
 
