@@ -4,17 +4,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const keypadButtons = document.querySelectorAll('.keypad button');
     const resetAllButton = document.getElementById('reset-all');
 
-    let currentTargetZone = null; // المنطقة التي يتم إدخال الأرقام لها
-    let currentInput = ""; // الأرقام المدخلة حاليًا في لوحة المفاتيح
+    let currentTargetZone = null;
+    let currentInput = ""; // الأرقام المدخلة من لوحة المفاتيح
 
-    // تحميل البيانات المحفوظة إن وجدت
     loadData();
 
     playerZones.forEach(zone => {
         zone.addEventListener('click', () => {
             currentTargetZone = zone;
-            // currentInput = zone.querySelector('.numbers-display').textContent.replace(/-/g, ''); // تحميل الأرقام الموجودة (اختياري)
-            currentInput = ""; // ابدأ دائمًا بإدخال جديد
+            currentInput = "";
             keypadOverlay.style.display = 'flex';
         });
     });
@@ -26,31 +24,56 @@ document.addEventListener('DOMContentLoaded', () => {
             if (keyValue === 'confirm') {
                 if (currentTargetZone && currentInput.length > 0) {
                     const displayElement = currentTargetZone.querySelector('.numbers-display');
-                    // إذا كان هناك أرقام سابقة، أضف فاصل
-                    let existingNumbers = displayElement.textContent;
-                    if (existingNumbers && existingNumbers !== '-' && existingNumbers.trim() !== "") {
-                        displayElement.textContent += '-' + currentInput.split('').join('-');
-                    } else {
-                        displayElement.textContent = currentInput.split('').join('-');
+                    let existingNumbersText = displayElement.textContent;
+                    
+                    // تحويل الأرقام الموجودة إلى Set من الأرقام (وليس السلاسل النصية)
+                    let existingNumbersSet = new Set();
+                    if (existingNumbersText && existingNumbersText.trim() !== "" && existingNumbersText.trim() !== '-') {
+                        existingNumbersText.split('-').forEach(numStr => {
+                            if (numStr.trim() !== "") { // تأكد أن السلسلة ليست فارغة
+                                existingNumbersSet.add(parseInt(numStr.trim())); // تحويل إلى رقم وإضافة
+                            }
+                        });
                     }
-                    saveData(); // حفظ البيانات
+
+                    // إضافة الأرقام الجديدة من currentInput إلى Set، مع التحقق من عدم التكرار والحد الأقصى
+                    for (let char of currentInput) {
+                        const newNum = parseInt(char);
+                        if (!existingNumbersSet.has(newNum)) { // إذا لم يكن الرقم موجودًا
+                            if (existingNumbersSet.size < 7) { // إذا لم نصل للحد الأقصى (7 أرقام)
+                                existingNumbersSet.add(newNum);
+                            } else {
+                                alert("لا يمكن إضافة أكثر من 7 أرقام فريدة لكل منطقة.");
+                                break; // توقف عن إضافة المزيد من الأرقام من currentInput
+                            }
+                        }
+                    }
+                    
+                    // تحويل Set مرة أخرى إلى سلسلة نصية للعرض، مع الفرز
+                    let sortedNumbersArray = Array.from(existingNumbersSet).sort((a, b) => a - b);
+                    displayElement.textContent = sortedNumbersArray.join('-');
+                    
+                    saveData();
                 }
                 closeKeypad();
             } else if (keyValue === 'backspace') {
                 currentInput = currentInput.slice(0, -1);
-                // يمكن إضافة عرض مؤقت للأرقام المدخلة في لوحة المفاتيح نفسها
-                console.log("Current keypad input:", currentInput); // للتجربة
-            } else if (keyValue >= '0' && keyValue <= '6') { // فقط أرقام الدومينو
-                if (currentInput.length < 7) { // حد أقصى لعدد الأرقام (مثلاً 7 أحجار)
-                    currentInput += keyValue;
-                    console.log("Current keypad input:", currentInput); // للتجربة
+                console.log("Current keypad input (after backspace):", currentInput);
+            } else if (keyValue >= '0' && keyValue <= '6') {
+                // هنا في currentInput، يمكن أن تتكرر الأرقام مؤقتًا قبل التأكيد
+                // لكن يجب ألا نسمح بإدخال نفس الرقم مرتين متتاليتين في currentInput إذا أردت
+                // أو يمكننا منع التكرار في currentInput نفسه قبل التأكيد
+                if (currentInput.length < 7) { // الحد الأقصى لطول الإدخال المؤقت
+                    // اختياري: منع إضافة نفس الرقم إذا كان هو آخر رقم في currentInput
+                    // if (currentInput.length === 0 || currentInput[currentInput.length - 1] !== keyValue) {
+                         currentInput += keyValue;
+                    // }
+                    console.log("Current keypad input (after digit):", currentInput);
                 }
             }
-            // لا نغلق اللوحة بعد كل رقم، فقط عند التأكيد أو الإلغاء
         });
     });
 
-    // إغلاق لوحة المفاتيح عند الضغط خارجها (اختياري)
     keypadOverlay.addEventListener('click', (e) => {
         if (e.target === keypadOverlay) {
             closeKeypad();
@@ -66,13 +89,13 @@ document.addEventListener('DOMContentLoaded', () => {
     resetAllButton.addEventListener('click', () => {
         if (confirm("هل أنت متأكد أنك تريد مسح جميع الأرقام؟")) {
             playerZones.forEach(zone => {
-                zone.querySelector('.numbers-display').textContent = ''; // أو '-' إذا أردت
+                zone.querySelector('.numbers-display').textContent = '';
             });
-            saveData(); // حفظ الحالة الفارغة
+            saveData();
+            updateInitialDisplay(); // تحديث العرض بعد المسح
         }
     });
 
-    // ----- localStorage Persistence -----
     function saveData() {
         const dataToSave = {
             friend: document.getElementById('friend-numbers').textContent,
@@ -90,19 +113,19 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('left-numbers').textContent = data.left || '';
             document.getElementById('right-numbers').textContent = data.right || '';
         } else {
-            // تعيين قيمة ابتدائية إذا لم توجد بيانات محفوظة
             playerZones.forEach(zone => {
                 zone.querySelector('.numbers-display').textContent = '';
             });
         }
+        updateInitialDisplay();
     }
-
-    // استدعاء أولي لضمان عرض الشرطة إذا كانت فارغة بعد التحميل
-     playerZones.forEach(zone => {
-        const display = zone.querySelector('.numbers-display');
-        if (!display.textContent.trim()) {
-            // display.textContent = '-'; // يمكنك تفعيل هذا السطر إذا أردت عرض "-" للأماكن الفارغة دائمًا
-        }
-    });
-
+    
+    function updateInitialDisplay() {
+         playerZones.forEach(zone => {
+             const display = zone.querySelector('.numbers-display');
+             if (!display.textContent.trim()) {
+                 // display.textContent = '-'; // يمكنك تفعيل هذا إذا أردت "-" في المناطق الفارغة
+             }
+         });
+    }
 });
