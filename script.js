@@ -1,57 +1,108 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مساعد الدومينو</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="game-container">
-        <!-- منطقة الصديق (الأمام) -->
-        <div class="player-area" id="friend-area" data-player="friend" title="أرقام الصديق">
-            <!-- <h3>مقابلي (صديقك)</h3> -->
-            <div class="missing-numbers" id="friend-missing">-</div>
-            <!-- <button class="input-btn" data-player="friend">إدخال لصديقك</button> -->
-        </div>
+document.addEventListener('DOMContentLoaded', () => {
+    const playerZones = document.querySelectorAll('.player-zone');
+    const keypadOverlay = document.getElementById('keypad-overlay');
+    const keypadButtons = document.querySelectorAll('.keypad button');
+    const resetAllButton = document.getElementById('reset-all');
 
-        <!-- يمكن وضع اللاعبين (يسار ويمين) في صف واحد أو تحت بعضهما -->
-        <div class="middle-row"> <!-- هذا الـ div اختياري، إذا أردتهم جنبًا إلى جنب -->
-            <!-- منطقة لاعب اليسار -->
-            <div class="player-area" id="left-area" data-player="left" title="أرقام لاعب اليسار">
-                <!-- <h3>يسار</h3> -->
-                <div class="missing-numbers" id="left-missing">-</div>
-                <!-- <button class="input-btn" data-player="left">إدخال ليسار</button> -->
-            </div>
+    let currentTargetZone = null; // المنطقة التي يتم إدخال الأرقام لها
+    let currentInput = ""; // الأرقام المدخلة حاليًا في لوحة المفاتيح
 
-            <!-- منطقة لاعب اليمين -->
-            <div class="player-area" id="right-area" data-player="right" title="أرقام لاعب اليمين">
-                <!-- <h3>يمين</h3> -->
-                <div class="missing-numbers" id="right-missing">-</div>
-                <!-- <button class="input-btn" data-player="right">إدخال ليمين</button> -->
-            </div>
-        </div>
+    // تحميل البيانات المحفوظة إن وجدت
+    loadData();
 
-        <!-- منطقة اللاعب (أنت) - ليست تفاعلية لإدخال الأرقام -->
-        <!-- <div class="player-area" id="user-area" style="cursor: default; background-color: #1c1c1c;">
-            <p style="font-size:0.9em; color: #777;">(أنت)</p>
-        </div> -->
-    </div>
+    playerZones.forEach(zone => {
+        zone.addEventListener('click', () => {
+            currentTargetZone = zone;
+            // currentInput = zone.querySelector('.numbers-display').textContent.replace(/-/g, ''); // تحميل الأرقام الموجودة (اختياري)
+            currentInput = ""; // ابدأ دائمًا بإدخال جديد
+            keypadOverlay.style.display = 'flex';
+        });
+    });
 
-    <div class="controls">
-        <button id="start-game">🔄 ابدأ</button> <!-- مثال على استخدام أيقونة ونص -->
-        <button id="end-game">⏹️ إنهاء</button>
-    </div>
+    keypadButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const keyValue = button.dataset.key;
 
-    <div id="keypad-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn">×</span>
-            <h4>أدخل الأرقام (0-6):</h4>
-            <input type="text" id="number-input" pattern="[0-6]*" maxlength="7">
-            <button id="submit-numbers">✔️ تأكيد</button>
-        </div>
-    </div>
+            if (keyValue === 'confirm') {
+                if (currentTargetZone && currentInput.length > 0) {
+                    const displayElement = currentTargetZone.querySelector('.numbers-display');
+                    // إذا كان هناك أرقام سابقة، أضف فاصل
+                    let existingNumbers = displayElement.textContent;
+                    if (existingNumbers && existingNumbers !== '-' && existingNumbers.trim() !== "") {
+                        displayElement.textContent += '-' + currentInput.split('').join('-');
+                    } else {
+                        displayElement.textContent = currentInput.split('').join('-');
+                    }
+                    saveData(); // حفظ البيانات
+                }
+                closeKeypad();
+            } else if (keyValue === 'backspace') {
+                currentInput = currentInput.slice(0, -1);
+                // يمكن إضافة عرض مؤقت للأرقام المدخلة في لوحة المفاتيح نفسها
+                console.log("Current keypad input:", currentInput); // للتجربة
+            } else if (keyValue >= '0' && keyValue <= '6') { // فقط أرقام الدومينو
+                if (currentInput.length < 7) { // حد أقصى لعدد الأرقام (مثلاً 7 أحجار)
+                    currentInput += keyValue;
+                    console.log("Current keypad input:", currentInput); // للتجربة
+                }
+            }
+            // لا نغلق اللوحة بعد كل رقم، فقط عند التأكيد أو الإلغاء
+        });
+    });
 
-    <script src="script.js"></script>
-</body>
-</html>
+    // إغلاق لوحة المفاتيح عند الضغط خارجها (اختياري)
+    keypadOverlay.addEventListener('click', (e) => {
+        if (e.target === keypadOverlay) {
+            closeKeypad();
+        }
+    });
+
+    function closeKeypad() {
+        keypadOverlay.style.display = 'none';
+        currentInput = "";
+        currentTargetZone = null;
+    }
+
+    resetAllButton.addEventListener('click', () => {
+        if (confirm("هل أنت متأكد أنك تريد مسح جميع الأرقام؟")) {
+            playerZones.forEach(zone => {
+                zone.querySelector('.numbers-display').textContent = ''; // أو '-' إذا أردت
+            });
+            saveData(); // حفظ الحالة الفارغة
+        }
+    });
+
+    // ----- localStorage Persistence -----
+    function saveData() {
+        const dataToSave = {
+            friend: document.getElementById('friend-numbers').textContent,
+            left: document.getElementById('left-numbers').textContent,
+            right: document.getElementById('right-numbers').textContent,
+        };
+        localStorage.setItem('dominoHelperData', JSON.stringify(dataToSave));
+    }
+
+    function loadData() {
+        const savedData = localStorage.getItem('dominoHelperData');
+        if (savedData) {
+            const data = JSON.parse(savedData);
+            document.getElementById('friend-numbers').textContent = data.friend || '';
+            document.getElementById('left-numbers').textContent = data.left || '';
+            document.getElementById('right-numbers').textContent = data.right || '';
+        } else {
+            // تعيين قيمة ابتدائية إذا لم توجد بيانات محفوظة
+            playerZones.forEach(zone => {
+                zone.querySelector('.numbers-display').textContent = '';
+            });
+        }
+    }
+
+    // استدعاء أولي لضمان عرض الشرطة إذا كانت فارغة بعد التحميل
+     playerZones.forEach(zone => {
+        const display = zone.querySelector('.numbers-display');
+        if (!display.textContent.trim()) {
+            // display.textContent = '-'; // يمكنك تفعيل هذا السطر إذا أردت عرض "-" للأماكن الفارغة دائمًا
+        }
+    });
+
+});
