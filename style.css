@@ -34,8 +34,8 @@ html, body {
 }
 
 .player-zone {
-    background-color: var(--zone-background); /* #0a0a0a أو حتى #000000 إذا أردت المناطق بنفس لون الخلفية */
-      border: 1px solid #ffffff; */
+    background-color: var(--zone-background); /* يمكنك إبقاء هذا #0a0a0a أو تغييره إلى #000000 إذا أردت المناطق نفسها سوداء تمامًا */
+    border: 2px solid #ffffff; /* <<<--- هذا هو التغيير الرئيسي: حدود بيضاء وسميكة قليلاً */
     border-radius: 8px;
     display: flex;
     justify-content: center;
