@@ -157,5 +157,37 @@ html, body {
     background-color: #da190b;
 }
 
+.player-zone.zone-error-pulse {
+    animation: errorPulse 0.3s ease-out;
+}
+.player-zone.zone-notice-pulse {
+    animation: noticePulse 0.3s ease-out;
+}
+
+@keyframes errorPulse {
+    0% { background-color: var(--zone-background); }
+    50% { background-color: #5c0000; } /* أحمر غامق للخطأ */
+    100% { background-color: var(--zone-background); }
+}
+@keyframes noticePulse {
+    0% { background-color: var(--zone-background); }
+    50% { background-color: #5c5300; } /* أصفر غامق للتنبيه */
+    100% { background-color: var(--zone-background); }
+}
+
+/* لجعل الأرقام داخل numbers-display قابلة للنقر بشكل فردي */
+.numbers-display span.removable-number {
+    cursor: pointer;
+    padding: 0 2px; /* هامش بسيط حول كل رقم لسهولة النقر */
+    /* يمكنك إضافة تأثير hover إذا أردت */
+}
+.numbers-display span.removable-number:hover {
+    background-color: rgba(255,255,255,0.1);
+    border-radius: 3px;
+}
+
+/* إذا أردت إخفاء لوحة المفاتيح تمامًا من HTML إذا لم تكن مستخدمة */
+/* .keypad-overlay { display: none !important; } */
+
 /* تعديل ليكون آخر زرين (تأكيد ومسح) يأخذان مساحة أوسع قليلاً إذا لزم الأمر */
 /* .keypad button[data-key="confirm"] { grid-column: span 2; } */
