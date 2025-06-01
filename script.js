@@ -1,114 +1,226 @@
 document.addEventListener('DOMContentLoaded', () => {
     const playerZones = document.querySelectorAll('.player-zone');
-    const keypadOverlay = document.getElementById('keypad-overlay');
-    const keypadButtons = document.querySelectorAll('.keypad button');
+    // const keypadOverlay = document.getElementById('keypad-overlay'); // قد لا نحتاجه
+    // const keypadButtons = document.querySelectorAll('.keypad button'); // قد لا نحتاجه
     const resetAllButton = document.getElementById('reset-all');
 
+    // الكشف عن جهاز اللمس
+    const isTouchDevice = ('ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0);
+
     let currentTargetZone = null;
-    let currentInput = ""; // الأرقام المدخلة من لوحة المفاتيح
+    // currentInput لن يستخدم بنفس الطريقة
+    // let currentInput = "";
 
     loadData();
 
-    playerZones.forEach(zone => {
-        zone.addEventListener('click', () => {
-            currentTargetZone = zone;
-            currentInput = "";
-            keypadOverlay.style.display = 'flex';
+    if (isTouchDevice) {
+        // إخفاء أو إزالة لوحة المفاتيح القديمة إذا كانت لا تزال في HTML
+        const keypadOverlay = document.getElementById('keypad-overlay');
+        if (keypadOverlay) keypadOverlay.style.display = 'none';
+
+        playerZones.forEach(zone => {
+            zone.addEventListener('click', handleZoneClickForMobile); // 'click' يعمل للمس أيضاً
         });
-    });
 
-    keypadButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const keyValue = button.dataset.key;
+        // منطق إزالة رقم عند النقر عليه مباشرة
+        playerZones.forEach(zone => {
+            const displayElement = zone.querySelector('.numbers-display');
+            displayElement.addEventListener('click', (event) => {
+                event.stopPropagation(); // منع الفقاعة إلى معالج المنطقة نفسها
+                handleNumberDisplayClick(event, zone, displayElement);
+            });
+        });
 
-                       if (keyValue === 'confirm') {
-                if (currentTargetZone && currentInput.length > 0) {
-                    const displayElement = currentTargetZone.querySelector('.numbers-display');
-                    let existingNumbersText = displayElement.textContent;
-                    
-                    let existingNumbersSet = new Set();
-                    if (existingNumbersText && existingNumbersText.trim() !== "" && existingNumbersText.trim() !== '-') {
-                        existingNumbersText.split('-').forEach(numStr => {
-                            // التحقق الإضافي هنا مهم
-                            if (numStr.trim() !== "" && !isNaN(parseInt(numStr.trim()))) {
-                                existingNumbersSet.add(parseInt(numStr.trim()));
-                            }
-                        });
-                    }
+    } else {
+        // سلوك لأجهزة الكمبيوتر (يمكن إبقاء لوحة المفاتيح القديمة أو عرض رسالة)
+        console.log("جهاز كمبيوتر مكتبي، نظام الإدخال باللمس المباشر غير مفعل.");
+        // هنا يمكنك إبقاء منطق لوحة المفاتيح القديم إذا أردت
+        // playerZones.forEach(zone => {
+        //     zone.addEventListener('click', () => {
+        //         currentTargetZone = zone;
+        //         currentInput = ""; // للتوافق مع الكود القديم إذا تم استخدامه
+        //         const keypadOverlay = document.getElementById('keypad-overlay');
+        //         if (keypadOverlay) keypadOverlay.style.display = 'flex';
+        //     });
+        // });
+        // keypadButtons.forEach(button => { /* ... الكود القديم للوحة المفاتيح ... */ });
+        //  keypadOverlay.addEventListener('click', (e) => { /* ... */ });
 
-                    for (let char of currentInput) {
-                        const newNum = parseInt(char);
-                        // التحقق الإضافي هنا مهم
-                        if (!isNaN(newNum) && !existingNumbersSet.has(newNum)) {
-                            if (existingNumbersSet.size < 7) {
-                                existingNumbersSet.add(newNum);
-                            } else {
-                                // يمكنك إزالة هذا الـ alert إذا كان مزعجًا، أو تعديله
-                                // alert("لا يمكن إضافة أكثر من 7 أرقام فريدة لكل منطقة."); 
-                                console.log("Limit of 7 unique numbers reached.");
-                                break; 
-                            }
+        // أو جعل المناطق غير قابلة للاستخدام
+        playerZones.forEach(zone => {
+            zone.style.cursor = 'not-allowed';
+            zone.title = "هذه الميزة محسنة لأجهزة اللمس.";
+        });
+        // إخفاء لوحة المفاتيح إذا كانت موجودة
+        const keypadOverlay = document.getElementById('keypad-overlay');
+        if (keypadOverlay) keypadOverlay.style.display = 'none';
+
+    }
+
+
+    function handleZoneClickForMobile(event) {
+        currentTargetZone = event.currentTarget; // المنطقة التي تم النقر عليها
+        const rect = currentTargetZone.getBoundingClientRect(); // أبعاد وموقع المنطقة
+
+        // إحداثيات النقر بالنسبة للمنطقة نفسها
+        // event.clientX/Y هي بالنسبة لإطار العرض viewport
+        const clickX = event.clientX - rect.left;
+        const clickY = event.clientY - rect.top;
+
+        const zoneWidth = rect.width;
+        const zoneHeight = rect.height;
+
+        // تحديد الرقم بناءً على موقع النقر
+        // هذا تقسيم بسيط، يمكن تحسينه
+        // نفترض تقسيم المنطقة إلى 3 أعمدة و 3 صفوف (تقريبي)
+        let selectedNumber = -1;
+
+        // الصف العلوي
+        if (clickY < zoneHeight / 3) {
+            if (clickX < zoneWidth / 3) selectedNumber = 1;
+            else if (clickX < (zoneWidth * 2) / 3) selectedNumber = 2;
+            else selectedNumber = 3;
+        }
+        // الصف الأوسط
+        else if (clickY < (zoneHeight * 2) / 3) {
+            if (clickX < zoneWidth / 3) selectedNumber = 4;
+            else if (clickX < (zoneWidth * 2) / 3) selectedNumber = 0;
+            else selectedNumber = 5;
+        }
+        // الصف السفلي
+        else {
+            if (clickX < zoneWidth / 3) selectedNumber = 6;
+            // المنطقتان الأخريان في الأسفل يمكن تخصيصهما لاحقًا (مثلاً للمسح)
+            // else if (clickX < (zoneWidth * 2) / 3) { /* action for middle-bottom */ }
+            // else { /* action for right-bottom */ }
+        }
+
+        if (selectedNumber !== -1) {
+            addNumberToZone(currentTargetZone, selectedNumber);
+        }
+    }
+
+    function addNumberToZone(zone, number) {
+        const displayElement = zone.querySelector('.numbers-display');
+        let existingNumbersText = displayElement.textContent;
+        let existingNumbersSet = new Set();
+
+        if (existingNumbersText && existingNumbersText.trim() !== "" && existingNumbersText.trim() !== '-') {
+            existingNumbersText.split('-').forEach(numStr => {
+                if (numStr.trim() !== "" && !isNaN(parseInt(numStr.trim()))) {
+                    existingNumbersSet.add(parseInt(numStr.trim()));
+                }
+            });
+        }
+
+        if (!existingNumbersSet.has(number)) {
+            if (existingNumbersSet.size < 7) {
+                existingNumbersSet.add(number);
+            } else {
+                console.log("Limit of 7 unique numbers reached for this zone.");
+                // يمكنك عرض تنبيه خفيف هنا إذا أردت، مثلاً اهتزاز خفيف أو تغيير لون للحظة
+                // navigator.vibrate(50); // يتطلب صلاحية وقد لا يعمل دائماً
+                zone.classList.add('zone-error-pulse');
+                setTimeout(() => zone.classList.remove('zone-error-pulse'), 300);
+                return; // لا تقم بأي شيء آخر إذا كان الحد ممتلئًا
+            }
+        } else {
+            // الرقم موجود بالفعل، ربما لا تفعل شيئًا أو تعطي إشارة
+            console.log("Number already exists in this zone.");
+            // navigator.vibrate(20);
+            zone.classList.add('zone-notice-pulse');
+            setTimeout(() => zone.classList.remove('zone-notice-pulse'), 300);
+            return;
+        }
+
+        let sortedNumbersArray = Array.from(existingNumbersSet).sort((a, b) => a - b);
+        displayElement.textContent = sortedNumbersArray.join('-');
+
+        saveData();
+        updateDisplayWithSpans(displayElement); // لتسهيل النقر على الأرقام لإزالتها
+    }
+
+    function handleNumberDisplayClick(event, zone, displayElement) {
+        if (!isTouchDevice) return; // هذه الميزة فقط للهواتف
+
+        const clickedElement = event.target;
+        if (clickedElement.tagName === 'SPAN' && clickedElement.classList.contains('removable-number')) {
+            const numberToRemove = parseInt(clickedElement.dataset.number);
+            if (!isNaN(numberToRemove)) {
+                removeNumberFromZone(zone, displayElement, numberToRemove);
+            }
+        }
+    }
+
+    function removeNumberFromZone(zone, displayElement, numberToRemove) {
+        let existingNumbersText = displayElement.textContent;
+        let existingNumbersSet = new Set();
+
+        if (existingNumbersText && existingNumbersText.trim() !== "" && existingNumbersText.trim() !== '-') {
+            existingNumbersText.split('-').forEach(numStr => {
+                if (numStr.trim() !== "" && !isNaN(parseInt(numStr.trim()))) {
+                    existingNumbersSet.add(parseInt(numStr.trim()));
+                }
+            });
+        }
+
+        if (existingNumbersSet.has(numberToRemove)) {
+            existingNumbersSet.delete(numberToRemove);
+            let sortedNumbersArray = Array.from(existingNumbersSet).sort((a, b) => a - b);
+            displayElement.textContent = sortedNumbersArray.join('-');
+            saveData();
+            updateDisplayWithSpans(displayElement); // تحديث الـ spans
+        }
+    }
+    
+    // دالة لتحديث عرض الأرقام باستخدام SPANs لتسهيل الحذف
+    function updateDisplayWithSpans(displayElement) {
+        const numbersText = displayElement.textContent;
+        if (numbersText && numbersText.trim() !== "" && numbersText.trim() !== '-') {
+            const numbersArray = numbersText.split('-');
+            displayElement.innerHTML = ''; // مسح المحتوى الحالي
+            numbersArray.forEach((numStr, index) => {
+                if (numStr.trim() !== "") {
+                    const span = document.createElement('span');
+                    span.textContent = numStr;
+                    span.classList.add('removable-number');
+                    span.dataset.number = numStr; // لتسهيل التعرف على الرقم
+                    displayElement.appendChild(span);
+                    if (index < numbersArray.length - 1) {
+                        // إضافة الفاصل '-' مرة أخرى كنص عادي، إلا إذا كان آخر رقم
+                        // أو التأكد من أن الأرقام التي لا تحتوي على فاصل تعمل بشكل جيد
+                        const nextNumStr = (numbersArray[index+1] || "").trim();
+                        if (nextNumStr !== "") {
+                             displayElement.appendChild(document.createTextNode('-'));
                         }
                     }
-                    
-                    let sortedNumbersArray = Array.from(existingNumbersSet).sort((a, b) => a - b);
-                    displayElement.textContent = sortedNumbersArray.join('-');
-                    
-                    // إذا كانت المجموعة فارغة بعد كل العمليات، ربما نجعل النص فارغًا أو "-"
-                    if (sortedNumbersArray.length === 0) {
-                        // displayElement.textContent = '-'; // أو ''
-                    }
-
-                    saveData();
                 }
-                closeKeypad();
-            
-            } else if (keyValue === 'backspace') {
-                currentInput = currentInput.slice(0, -1);
-                console.log("Current keypad input (after backspace):", currentInput);
-            } else if (keyValue >= '0' && keyValue <= '6') {
-                // هنا في currentInput، يمكن أن تتكرر الأرقام مؤقتًا قبل التأكيد
-                // لكن يجب ألا نسمح بإدخال نفس الرقم مرتين متتاليتين في currentInput إذا أردت
-                // أو يمكننا منع التكرار في currentInput نفسه قبل التأكيد
-                if (currentInput.length < 7) { // الحد الأقصى لطول الإدخال المؤقت
-                    // اختياري: منع إضافة نفس الرقم إذا كان هو آخر رقم في currentInput
-                    // if (currentInput.length === 0 || currentInput[currentInput.length - 1] !== keyValue) {
-                         currentInput += keyValue;
-                    // }
-                    console.log("Current keypad input (after digit):", currentInput);
-                }
-            }
-        });
-    });
-
-    keypadOverlay.addEventListener('click', (e) => {
-        if (e.target === keypadOverlay) {
-            closeKeypad();
+            });
+        } else {
+            displayElement.innerHTML = ''; // اتركها فارغة إذا لا توجد أرقام
         }
-    });
-
-    function closeKeypad() {
-        keypadOverlay.style.display = 'none';
-        currentInput = "";
-        currentTargetZone = null;
     }
+
 
     resetAllButton.addEventListener('click', () => {
         if (confirm("هل أنت متأكد أنك تريد مسح جميع الأرقام؟")) {
             playerZones.forEach(zone => {
-                zone.querySelector('.numbers-display').textContent = '';
+                const display = zone.querySelector('.numbers-display');
+                display.textContent = '';
+                updateDisplayWithSpans(display); // تحديث بعد المسح
             });
             saveData();
-            updateInitialDisplay(); // تحديث العرض بعد المسح
+            // updateInitialDisplay(); //  تأكد من أن هذا يتم استدعاؤه بشكل صحيح أو مدمج
         }
     });
 
     function saveData() {
-        const dataToSave = {
-            friend: document.getElementById('friend-numbers').textContent,
-            left: document.getElementById('left-numbers').textContent,
-            right: document.getElementById('right-numbers').textContent,
-        };
+        const dataToSave = {};
+        playerZones.forEach(zone => {
+            const playerId = zone.dataset.player; // 'friend', 'left', 'right'
+            // نحفظ النص الخام، وعند التحميل نعيد بناء الـ spans
+            dataToSave[playerId] = zone.querySelector('.numbers-display').textContent;
+        });
         localStorage.setItem('dominoHelperData', JSON.stringify(dataToSave));
     }
 
@@ -119,20 +231,19 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('friend-numbers').textContent = data.friend || '';
             document.getElementById('left-numbers').textContent = data.left || '';
             document.getElementById('right-numbers').textContent = data.right || '';
-        } else {
-            playerZones.forEach(zone => {
-                zone.querySelector('.numbers-display').textContent = '';
-            });
         }
-        updateInitialDisplay();
+        // تحديث العرض الأولي باستخدام spans
+        playerZones.forEach(zone => {
+            updateDisplayWithSpans(zone.querySelector('.numbers-display'));
+        });
     }
-    
-    function updateInitialDisplay() {
-         playerZones.forEach(zone => {
-             const display = zone.querySelector('.numbers-display');
-             if (!display.textContent.trim()) {
-                 // display.textContent = '-'; // يمكنك تفعيل هذا إذا أردت "-" في المناطق الفارغة
-             }
-         });
-    }
+
+    // الكود الخاص بلوحة المفاتيح القديمة (إذا قررت الإبقاء عليه للكمبيوتر)
+    // ... (يمكنك نسخ ولصق الكود المتعلق بـ keypadOverlay و keypadButtons هنا داخل else لـ !isTouchDevice)
+    // ... مع التأكد من أن currentTargetZone و currentInput يتم تعيينهما بشكل صحيح
+    // ... وأن دالة closeKeypad تعمل كما هو متوقع.
+
+    // ملاحظة: الدالة updateInitialDisplay() تم دمج وظيفتها في نهاية loadData
+    // وكذلك في resetAllButton.
+
 });
